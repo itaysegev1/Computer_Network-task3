@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 
 YELLOW= "\033[93m" #For resending Ack
 RED= "\033[91m" #For Errors
@@ -125,6 +126,7 @@ def msg_of_ending(client_socket, end_message):
     try:
         s = "Received All Segments Successfully"
         print(s)
+        time.sleep(2)
         client_socket.sendall(s.encode('utf-8'))
         print(f"{BLUE}Received  all segments.txt! the final message is:\n {end_message}{RESET}")
     except Exception as e:
@@ -173,6 +175,7 @@ Returns:
 
 def client_handler(client_socket, client_address):
     global WINDOW_SIZE
+    flag =True #need to be false for dropping 1 segments ack
     list_msg_in_order = []
     list_not_in_order = {}
     number_of_segments = 0
@@ -207,8 +210,12 @@ def client_handler(client_socket, client_address):
                             list_msg_in_order.append(list_not_in_order.pop(expected_sequence))
                             expected_sequence += 1
                         list_not_in_order.clear()
-                        send_ack(client_socket, expected_sequence % WINDOW_SIZE)
-                        expected_sequence += 1
+                        if expected_sequence== 15 and not flag:
+                            print("Skipping sequence")
+                            flag = True
+                        else:
+                            send_ack(client_socket, expected_sequence % WINDOW_SIZE)
+                            expected_sequence += 1
                     elif sequence_number != -1:
                         print(f"{RED}Out-of-order segment received. Resending ACK{expected_sequence % WINDOW_SIZE - 1}.{RESET}")
                         try:
@@ -216,7 +223,7 @@ def client_handler(client_socket, client_address):
                             list_not_in_order[real_seq_num] = segment_data
                         except ValueError as ve:
                             print(f"{RED}Invalid {ve}{RESET}")
-                        send_ack(client_socket, expected_sequence % WINDOW_SIZE - 1)
+                        send_ack(client_socket, expected_sequence % WINDOW_SIZE)
                     if number_of_segments == len(list_msg_in_order):
                         all_msg = ""
                         for msg in list_msg_in_order:

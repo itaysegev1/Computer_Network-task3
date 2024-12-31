@@ -235,7 +235,7 @@ def client(message, window_size, timeout, is_from_file, path=""):
             print(f"{PURPLE}Message segmented into {len(segments)} parts.{RESET}")
             try:
                 sliding_window_send(my_socket, segments, window_size, timeout)
-                time.sleep(1)
+                time.sleep(4)
                 response = my_socket.recv(1024)
                 if response:
                     decoded_response = response.decode('utf-8')
