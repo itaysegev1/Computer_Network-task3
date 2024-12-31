@@ -1,4 +1,4 @@
-message:"This is a test message"
-maximum_msg_size:2
+message:"This is a test message, Today was a cloudy day and i wanted to go home!"
+maximum_msg_size:10
 window_size:4
 timeout:5

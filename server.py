@@ -204,23 +204,26 @@ def client_handler(client_socket, client_address):
                         number_of_segments = int(segment_data)
                         send_ack(client_socket, -1)
                     if sequence_number == (expected_sequence % WINDOW_SIZE):
-                        if expected_sequence== 15 and not flag:
+                        if expected_sequence== 3 and not flag:
                             print("Skipping sequence")
                             flag = True
                         else:
                             print(f"{CYAN}Segment {expected_sequence} received in order.{RESET}")
                             list_msg_in_order.append(segment_data)
-                            while expected_sequence in list_not_in_order:
-                                list_msg_in_order.append(list_not_in_order.pop(expected_sequence))
-                                expected_sequence += 1
-                            list_not_in_order.clear()
                             send_ack(client_socket, expected_sequence % WINDOW_SIZE)
                             expected_sequence += 1
+                            while expected_sequence in list_not_in_order.keys() and expected_sequence < number_of_segments:
+                                print(f"{BLUE}Segment {expected_sequence} was in not in order list.{RESET}")
+                                list_msg_in_order.append(list_not_in_order.pop(expected_sequence))
+                                send_ack(client_socket, expected_sequence % WINDOW_SIZE)
+                                expected_sequence += 1
+                            list_not_in_order.clear()
                     elif sequence_number != -1:
                         print(f"{RED}Out-of-order segment received. Resending ACK{expected_sequence % WINDOW_SIZE - 1}.{RESET}")
                         try:
                             real_seq_num = real_number(int(expected_sequence), int(sequence_number))
-                            list_not_in_order[real_seq_num] = segment_data
+                            if real_seq_num < number_of_segments:
+                                list_not_in_order[real_seq_num] = segment_data
                         except ValueError as ve:
                             print(f"{RED}Invalid {ve}{RESET}")
                         send_ack(client_socket, expected_sequence % WINDOW_SIZE-1)

@@ -30,7 +30,10 @@ Methods Goal:
 Returns:
     the field we exacted from the file, so the message,window_size and timeout
     """
-
+def swap_segments(segments):
+    temp=segments[3]
+    segments[3]=segments[2]
+    segments[2]=temp
 
 def read_file(path):
     with open(path, 'r', encoding='utf-8') as file:
@@ -226,12 +229,15 @@ Returns:
 
 
 def client(message, window_size, timeout, is_from_file, path=""):
+    flag=False #this flag need to be true for swapping two segments
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as my_socket:
             my_socket.settimeout(0.1)
             my_socket.connect((host, port))
             max_size = handle_start(my_socket, window_size, is_from_file, path)
             segments = segment_message(message, max_size, window_size)
+            if flag:
+                swap_segments(segments)
             print(f"{PURPLE}Message segmented into {len(segments)} parts.{RESET}")
             try:
                 sliding_window_send(my_socket, segments, window_size, timeout)
