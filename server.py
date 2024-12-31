@@ -175,7 +175,7 @@ Returns:
 
 def client_handler(client_socket, client_address):
     global WINDOW_SIZE
-    flag =True #need to be false for dropping 1 segments ack
+    flag =False #need to be false for dropping 1 segments ack
     list_msg_in_order = []
     list_not_in_order = {}
     number_of_segments = 0
@@ -204,16 +204,16 @@ def client_handler(client_socket, client_address):
                         number_of_segments = int(segment_data)
                         send_ack(client_socket, -1)
                     if sequence_number == (expected_sequence % WINDOW_SIZE):
-                        print(f"{CYAN}Segment {expected_sequence} received in order.{RESET}")
-                        list_msg_in_order.append(segment_data)
-                        while expected_sequence in list_not_in_order:
-                            list_msg_in_order.append(list_not_in_order.pop(expected_sequence))
-                            expected_sequence += 1
-                        list_not_in_order.clear()
                         if expected_sequence== 15 and not flag:
                             print("Skipping sequence")
                             flag = True
                         else:
+                            print(f"{CYAN}Segment {expected_sequence} received in order.{RESET}")
+                            list_msg_in_order.append(segment_data)
+                            while expected_sequence in list_not_in_order:
+                                list_msg_in_order.append(list_not_in_order.pop(expected_sequence))
+                                expected_sequence += 1
+                            list_not_in_order.clear()
                             send_ack(client_socket, expected_sequence % WINDOW_SIZE)
                             expected_sequence += 1
                     elif sequence_number != -1:
@@ -223,7 +223,7 @@ def client_handler(client_socket, client_address):
                             list_not_in_order[real_seq_num] = segment_data
                         except ValueError as ve:
                             print(f"{RED}Invalid {ve}{RESET}")
-                        send_ack(client_socket, expected_sequence % WINDOW_SIZE)
+                        send_ack(client_socket, expected_sequence % WINDOW_SIZE-1)
                     if number_of_segments == len(list_msg_in_order):
                         all_msg = ""
                         for msg in list_msg_in_order:
@@ -264,7 +264,7 @@ def server():
 if __name__ == '__main__':
     choise = 0
     while choise != 1 and choise != 2:
-        choise = int(input("\n\t1.Enter manually Max message length.\n\t2.Read from a file.\n\t Enter your choice: "))
+        choise = int(input("\t1.Enter manually Max message length.\n\t2.Read from a file.\n\t Enter your choice: "))
         if choise == 1:
             MAX_MESSAGE_LENGTH = int(input("Enter max message length: "))
     server()
