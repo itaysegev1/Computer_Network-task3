@@ -8,6 +8,10 @@ BLUE = "\033[94m"  # For finished sending all
 PURPLE = "\033[95m"  # For start and end operations
 CYAN = "\033[96m"  # For message that sent to the server
 RESET = "\033[0m"
+
+DEFAULT_MESSAGE="This is the default message"
+DEFAULT_WINDOW_SIZE=3
+DEFAULT_TIMEOUT=3
 """
 General explanation of the logistics parts:
     what we did in this project is that we seperated every functionality we needed into methods,
@@ -22,7 +26,12 @@ track of the maximum length of the message the server can handle"""
 host = '127.0.0.1'
 port = 1234
 
+
 # --------------------------------------------------------------------------------------------------------------------------------------
+def ascii_check(text):
+    return all(ord(char) < 128 for char in text)
+
+
 """ We will access this function ONLY if the client chose to use the files!
 Methods Goal:
     This function opens a file and reads its content. 
@@ -30,22 +39,42 @@ Methods Goal:
 Returns:
     the field we exacted from the file, so the message,window_size and timeout
     """
+
+
 def swap_segments(segments):
-    temp=segments[3]
-    segments[3]=segments[2]
-    segments[2]=temp
+    temp = segments[3]
+    segments[3] = segments[2]
+    segments[2] = temp
+
 
 def read_file(path):
-    with open(path, 'r', encoding='utf-8') as file:
-        for line in file:
-            if line.startswith("message:"):
-                message = line[9:len(line) - 2]
-            else:
-                x, data = line.rsplit(":", 1)
-                if x == "window_size":
-                    window_size = int(data)
-                if x == "timeout":
-                    time_out = int(data)
+    try:
+        with open(path, 'r', encoding='utf-8') as file:
+            for line in file:
+                if line.startswith("message:"):
+                    message = line[9:len(line) - 2]
+                    if not ascii_check(message):
+                        print(f"{RED}invalid message: {message}{RESET}")
+                        message = DEFAULT_MESSAGE
+                else:
+                    x, data = line.rsplit(":", 1)
+                    if x == "window_size":
+                        try:
+                            window_size = int(data)
+                        except ValueError:
+                            print(f"{RED}Invalid window size{data}{RESET}")
+                            window_size = DEFAULT_WINDOW_SIZE
+                    if x == "timeout":
+                        try:
+                            time_out = int(data)
+                        except ValueError:
+                            print(f"{RED}Invalid timeout{data}{RESET}")
+                            time_out = DEFAULT_TIMEOUT
+    except FileNotFoundError:
+        print(f"{RED}File {path} not found! taking default arguments{RESET}")
+        message = DEFAULT_MESSAGE
+        window_size = DEFAULT_WINDOW_SIZE
+        time_out = DEFAULT_TIMEOUT
     return message, window_size, time_out
 
 
@@ -184,7 +213,6 @@ def sliding_window_send(my_socket, segments, window_size, timeout):
 
 
 def handle_start(my_socket, window_size, is_from_file, path=""):
-
     decoded_response = 0
     print(f"{PURPLE}Connected to the server.{RESET}")
     if is_from_file:
@@ -229,7 +257,7 @@ Returns:
 
 
 def client(message, window_size, timeout, is_from_file, path=""):
-    flag=False #this flag need to be true for swapping two segments
+    flag = False  # this flag need to be true for swapping two segments
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as my_socket:
             my_socket.settimeout(0.1)
@@ -265,12 +293,31 @@ if __name__ == '__main__':
     if choice == "1":
         file_path = input("Enter the path to the file: ")
         msg, w_size, t_out = read_file(file_path)
-        print(msg)
-        print(w_size)
-        print(t_out)
+        print(f"The message is: {msg}")
+        print(f"window size: {w_size}")
+        print(f"The timeout is: {t_out}")
         client(msg, w_size, t_out, True, path=file_path)
-    if choice == "2":
+    elif choice == "2":
         msg = input("Enter the message to send: ")
-        w_size = int(input("Enter the window size: "))
-        t_out = int(input("Enter the timeout (in seconds): "))
+        if not ascii_check(msg):
+            msg=DEFAULT_MESSAGE
+            print(f"{RED}Invalid message: {msg}{RESET}")
+        try:
+            w_size = int(input("Enter the window size: "))
+        except ValueError:
+            print(f"{RED}Invalid window size: {w_size}{RESET}")
+            w_size = DEFAULT_WINDOW_SIZE
+        try:
+            t_out = int(input("Enter the timeout (in seconds): "))
+        except ValueError:
+            print(f"{RED}Invalid timeout: {t_out}{RESET}")
+            t_out = DEFAULT_TIMEOUT
         client(msg, w_size, t_out, False)
+    else:
+        print("Invalid choice. taking default values...")
+        msg=DEFAULT_MESSAGE
+        w_size = DEFAULT_WINDOW_SIZE
+        t_out = DEFAULT_TIMEOUT
+        client(msg, w_size, t_out, False)
+
+

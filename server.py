@@ -2,13 +2,13 @@ import socket
 import threading
 import time
 
-YELLOW= "\033[93m" #For resending Ack
-RED= "\033[91m" #For Errors
-GREEN= "\033[92m" #For sending Ackes
-BLUE= "\033[94m" #For finished sending all
-PURPLE= "\033[95m" #For start and end operations
-CYAN= "\033[96m" #For resiving segments
-RESET= "\033[0m"
+YELLOW = "\033[93m"  # For resending Ack
+RED = "\033[91m"  # For Errors
+GREEN = "\033[92m"  # For sending Ackes
+BLUE = "\033[94m"  # For finished sending all
+PURPLE = "\033[95m"  # For start and end operations
+CYAN = "\033[96m"  # For resiving segments
+RESET = "\033[0m"
 """
 General explanation of the logistics parts:
     what we did in this project is that we seperated every functionality we needed into methods,
@@ -22,8 +22,10 @@ General explanation of the logistics parts:
 track of the maximum length of the message the server can handle"""
 host = '127.0.0.1'
 port = 1234
+DEFAULT_MAX_MESSAGE_LENGTH = 15
 MAX_MESSAGE_LENGTH = 1024
 WINDOW_SIZE = 0
+DEFAULT_HEADER_SIZE = 3
 HEADER_SIZE = 1024
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -35,12 +37,15 @@ servers messages length"""
 
 def read_from_file(path):
     global MAX_MESSAGE_LENGTH
-    with open(path, 'r', encoding='utf-8') as file:
-        for line in file:
-            if line.startswith("maximum_msg_size:"):
-                msg, maxes = line.rsplit(":", 1)
-                MAX_MESSAGE_LENGTH = int(maxes)
-                break
+    try:
+        with open(path, 'r', encoding='utf-8') as file:
+            for line in file:
+                if line.startswith("maximum_msg_size:"):
+                    msg, maxes = line.rsplit(":", 1)
+                    MAX_MESSAGE_LENGTH = int(maxes)
+                    break
+    except FileNotFoundError:
+        MAX_MESSAGE_LENGTH = int(DEFAULT_MAX_MESSAGE_LENGTH)
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -59,9 +64,12 @@ Returns:
 def receive_client_request(client_socket):
     global MAX_MESSAGE_LENGTH, WINDOW_SIZE
     try:
-
         data = client_socket.recv(int(MAX_MESSAGE_LENGTH) + int(HEADER_SIZE))
-        return data.decode('utf-8')
+        try:
+            message = data.decode('utf-8')
+        except UnicodeDecodeError:
+            message = data.decode('utf-8', errors='replace')
+        return message
     except Exception as e:
         print(f"{RED}Failed to receive client request: {e}{RESET}")
         return None
@@ -105,10 +113,15 @@ def check_client_request(request) -> str:
         read_from_file(path)
         return str(MAX_MESSAGE_LENGTH)
     elif request.startswith("window size:"):
-        _, num = request.rsplit(":", 1)
-        WINDOW_SIZE = int(num)
-        HEADER_SIZE = cal_number_seg_size(WINDOW_SIZE) + 1
+        try:
+            _, num = request.rsplit(":", 1)
+            WINDOW_SIZE = int(num)
+            HEADER_SIZE = cal_number_seg_size(WINDOW_SIZE) + 1
+        except ValueError:
+            print(f"{RED}Failed to extract window size from request: {request} taking default...{RESET}")
+            HEADER_SIZE = DEFAULT_HEADER_SIZE
         return str(HEADER_SIZE)
+
     else:
         return request
 
@@ -175,7 +188,7 @@ Returns:
 
 def client_handler(client_socket, client_address):
     global WINDOW_SIZE
-    flag =False #need to be false for dropping 1 segments ack
+    flag = False  # need to be true for dropping 1 segments ack
     list_msg_in_order = []
     list_not_in_order = {}
     number_of_segments = 0
@@ -204,9 +217,9 @@ def client_handler(client_socket, client_address):
                         number_of_segments = int(segment_data)
                         send_ack(client_socket, -1)
                     if sequence_number == (expected_sequence % WINDOW_SIZE):
-                        if expected_sequence== 3 and not flag:
+                        if expected_sequence == 3 and flag:
                             print("Skipping sequence")
-                            flag = True
+                            flag = False
                         else:
                             print(f"{CYAN}Segment {expected_sequence} received in order.{RESET}")
                             list_msg_in_order.append(segment_data)
@@ -219,14 +232,15 @@ def client_handler(client_socket, client_address):
                                 expected_sequence += 1
                             list_not_in_order.clear()
                     elif sequence_number != -1:
-                        print(f"{RED}Out-of-order segment received. Resending ACK{expected_sequence % WINDOW_SIZE - 1}.{RESET}")
+                        print(
+                            f"{RED}Out-of-order segment received. Resending ACK{expected_sequence % WINDOW_SIZE - 1}.{RESET}")
                         try:
                             real_seq_num = real_number(int(expected_sequence), int(sequence_number))
                             if real_seq_num < number_of_segments:
                                 list_not_in_order[real_seq_num] = segment_data
                         except ValueError as ve:
                             print(f"{RED}Invalid {ve}{RESET}")
-                        send_ack(client_socket, expected_sequence % WINDOW_SIZE-1)
+                        send_ack(client_socket, expected_sequence % WINDOW_SIZE - 1)
                     if number_of_segments == len(list_msg_in_order):
                         all_msg = ""
                         for msg in list_msg_in_order:
@@ -265,9 +279,13 @@ def server():
 
 
 if __name__ == '__main__':
-    choise = 0
-    while choise != 1 and choise != 2:
-        choise = int(input("\t1.Enter manually Max message length.\n\t2.Read from a file.\n\t Enter your choice: "))
-        if choise == 1:
-            MAX_MESSAGE_LENGTH = int(input("Enter max message length: "))
+    choice = 0
+    while choice != "1" and choice != "2":
+        choice = input("\t1.Read from a file.\n\t2.Enter manually Max message length.\n\t Enter your choice: ")
+        if choice == "2":
+            try:
+                MAX_MESSAGE_LENGTH = int(input("Enter max message length: "))
+            except Exception as ve:
+                print(f"{RED}Invalid input... taking the default size {ve}{RESET}")
+                MAX_MESSAGE_LENGTH = int(DEFAULT_MAX_MESSAGE_LENGTH)
     server()
