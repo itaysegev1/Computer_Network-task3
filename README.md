@@ -17,7 +17,7 @@ This project implements a client-server architecture for reliable message transf
 - Advances dynamically based on received acknowledgments.
 
 ### 3. **Dynamic Message Size**
-- Supports configuration of the server’s maximum message size.
+- Supports configuration of the server's maximum message size.
 - Dynamically adjusts based on server or file configuration.
 
 ### 4. **File Integration**
@@ -63,6 +63,7 @@ This project implements a client-server architecture for reliable message transf
   ```
 - The file content must be UTF-8 encoded and contain only ASCII characters.
 - All files should reside in the same directory.
+- You can add new files of your own, the project become with 2 Files
 
 ### Debugging Options
 - **Drop Segments**: Enable this feature in the `server.py` by modifying the `client-handler` method.
