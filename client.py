@@ -28,10 +28,6 @@ port = 1234
 
 
 # --------------------------------------------------------------------------------------------------------------------------------------
-def ascii_check(text):
-    return all(ord(char) < 128 for char in text)
-
-
 """ We will access this function ONLY if the client chose to use the files!
 Methods Goal:
     This function opens a file and reads its content. 
@@ -53,7 +49,7 @@ def read_file(path):
             for line in file:
                 if line.startswith("message:"):
                     message = line[9:len(line) - 2]
-                    if not ascii_check(message):
+                    if not message.isascii():
                         print(f"{RED}invalid message: {message}{RESET}")
                         message = DEFAULT_MESSAGE
                 else:
@@ -300,7 +296,7 @@ if __name__ == '__main__':
             client(msg, w_size, t_out, True, path=file_path)
         elif choice == "2":
             msg = input("Enter the message to send: ")
-            if not ascii_check(msg):
+            if not msg.isascii():
                 msg=DEFAULT_MESSAGE
                 print(f"{RED}Invalid message: {msg}  Taking Default message:'{DEFAULT_MESSAGE}'{RESET}")
             try:
