@@ -287,37 +287,38 @@ def client(message, window_size, timeout, is_from_file, path=""):
 in the main we had the clients input and direct him to the relevant path.
 """
 if __name__ == '__main__':
-
-    choice = input("Hello, you entered to selecting menu: \n\tPress 1 to read from a file\n\tPress 2 to write your "
-                   "own message\nEnter key to continue:")
-    if choice == "1":
-        file_path = input("Enter the path to the file: ")
-        msg, w_size, t_out = read_file(file_path)
-        print(f"The message is: {msg}")
-        print(f"window size: {w_size}")
-        print(f"The timeout is: {t_out}")
-        client(msg, w_size, t_out, True, path=file_path)
-    elif choice == "2":
-        msg = input("Enter the message to send: ")
-        if not ascii_check(msg):
-            msg=DEFAULT_MESSAGE
-            print(f"{RED}Invalid message: {msg}{RESET}")
-        try:
-            w_size = int(input("Enter the window size: "))
-        except ValueError:
-            print(f"{RED}Invalid window size: {w_size}{RESET}")
-            w_size = DEFAULT_WINDOW_SIZE
-        try:
-            t_out = int(input("Enter the timeout (in seconds): "))
-        except ValueError:
-            print(f"{RED}Invalid timeout: {t_out}{RESET}")
-            t_out = DEFAULT_TIMEOUT
-        client(msg, w_size, t_out, False)
-    else:
-        print("Invalid choice. taking default values...")
-        msg=DEFAULT_MESSAGE
-        w_size = DEFAULT_WINDOW_SIZE
-        t_out = DEFAULT_TIMEOUT
-        client(msg, w_size, t_out, False)
+    choice=0
+    while choice != "1" and choice != "2":
+        choice = input("Hello, you entered to selecting menu: \n\tPress 1 to read from a file\n\tPress 2 to write your "
+                       "own message\nEnter key to continue:")
+        if choice == "1":
+            file_path = input("Enter the path to the file: ")
+            msg, w_size, t_out = read_file(file_path)
+            print(f"The message is: {msg}")
+            print(f"window size: {w_size}")
+            print(f"The timeout is: {t_out}")
+            client(msg, w_size, t_out, True, path=file_path)
+        elif choice == "2":
+            msg = input("Enter the message to send: ")
+            if not ascii_check(msg):
+                msg=DEFAULT_MESSAGE
+                print(f"{RED}Invalid message: {msg}  Taking Default message:'{DEFAULT_MESSAGE}'{RESET}")
+            try:
+                w=input("Enter the window size: ")
+                w_size = int(w)
+            except ValueError:
+                print(f"{RED}Invalid window size: {w} Taking Default Window size: {DEFAULT_WINDOW_SIZE}{RESET}")
+                w_size = DEFAULT_WINDOW_SIZE
+            try:
+                t_o=input("Enter the timeout (seconds): ")
+                t_out = int(t_o)
+            except ValueError:
+                print(f"{RED}Invalid timeout: {t_o}  Taking Default timeout: {DEFAULT_TIMEOUT}{RESET}")
+                t_out = DEFAULT_TIMEOUT
+            client(msg, w_size, t_out, False)
+        if choice != "1" and choice != "2":
+            print(f"{RED} please enter again.{RESET}")
+        else:
+            print(f"{RED} Exiting...{RESET}")
 
 
