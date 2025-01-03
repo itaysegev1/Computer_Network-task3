@@ -30,6 +30,10 @@ This project implements a client-server architecture for reliable message transf
 - Uses default values for invalid user inputs.
 - Handles file-related errors (e.g., file not found).
 
+### 6. **Colors**
+- There are differnt colors for the message of the client and the messages of the server
+- All the errors and problems will be printed in red
+
 ---
 
 ## File Structure
