@@ -253,7 +253,7 @@ Returns:
 
 
 def client(message, window_size, timeout, is_from_file, path=""):
-    flag = False  # this flag need to be true for swapping two segments
+    flag = True  # this flag need to be true for swapping two segments
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as my_socket:
             my_socket.settimeout(0.1)

@@ -226,7 +226,7 @@ def client_handler(client_socket, client_address):
                             send_ack(client_socket, expected_sequence % WINDOW_SIZE)
                             expected_sequence += 1
                             while expected_sequence in list_not_in_order.keys() and expected_sequence < number_of_segments:
-                                print(f"{BLUE}Segment {expected_sequence} was in not in order list.{RESET}")
+                                print(f"{BLUE}Segment {expected_sequence} was in Buffer.{RESET}")
                                 list_msg_in_order.append(list_not_in_order.pop(expected_sequence))
                                 send_ack(client_socket, expected_sequence % WINDOW_SIZE)
                                 expected_sequence += 1
