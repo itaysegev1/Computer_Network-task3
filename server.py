@@ -188,7 +188,7 @@ Returns:
 
 def client_handler(client_socket, client_address):
     global WINDOW_SIZE
-    flag = False  # need to be true for dropping 1 segments ack
+    flag = True  # need to be true for dropping 1 segments ack
     list_msg_in_order = []
     list_not_in_order = {}
     number_of_segments = 0
