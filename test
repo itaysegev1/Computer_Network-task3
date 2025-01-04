@@ -1,4 +1,4 @@
-message:”היי מה נשמע איך אתה היום”
+message:”This is a test message”
 maximum_msg_size:8
 window_size:4
 timeout:5
